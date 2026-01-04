@@ -84,7 +84,8 @@ app.use(limiter);
 
 // Request validation middleware
 function validateContactRequest(req, res, next) {
-  const { name, email, url, message } = req.body || {};
+  const { name, email, url, message, description } = req.body || {};
+  const finalMessage = message || description || "";
 
   // Validate name
   if (!name || typeof name !== "string" || name.trim().length < 2) {
@@ -105,8 +106,8 @@ function validateContactRequest(req, res, next) {
   }
 
   // Validate optional message
-  if (message && typeof message === "string") {
-    if (message.length > 500) {
+  if (finalMessage && typeof finalMessage === "string") {
+    if (finalMessage.length > 500) {
       return res.status(400).json({ error: "Message must be less than 500 characters" });
     }
   }
@@ -156,12 +157,13 @@ app.get("/health", (_req, res) => {
 
 // Contact endpoint with validation and rate limiting
 app.post("/contact", contactLimiter, validateContactRequest, async (req, res) => {
-  const { name, email, url, message } = req.body;
+  const { name, email, url, message, description } = req.body;
+  const finalMessage = message || description || "";
 
   // Sanitize inputs
   const sanitizedName = name.trim().substring(0, 100);
   const sanitizedEmail = email.toLowerCase().trim();
-  const sanitizedMessage = message ? message.trim().substring(0, 500) : "";
+  const sanitizedMessage = finalMessage ? finalMessage.trim().substring(0, 500) : "";
 
   const body = [
     `Name: ${sanitizedName}`,
